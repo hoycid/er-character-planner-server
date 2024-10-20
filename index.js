@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 
 const corsOptions = {
-  origin: ["https://er-character-planner-teal.vercel.app/"],
+  origin: ["https://er-character-planner-teal.vercel.app/, localhost:3000"],
   methods: ["GET", "POST", "PUT", "DELETE"],
 };
 
