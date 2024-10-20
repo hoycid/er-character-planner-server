@@ -1,24 +1,15 @@
 import { DB } from "./connect.js";
+
 import express from "express";
 import bodyParser from "body-parser";
-import cors from "cors";
 
 const app = express();
-const PORT = process.env.PORT || 8000;
 
-// const corsOptions = {
-//   origin: [
-//     "https://er-character-planner-teal.vercel.app",
-//     "http://localhost:3000",
-//   ],
-//   methods: ["GET", "POST", "PUT", "DELETE"],
-// };
-
-// app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 app.get("/", (req, res) => {
-  res.status(200).send("SQL characters table online");
+  res.status(200);
+  res.send("SQL characters table online");
 });
 
 app.get("/classes", (req, res) => {
@@ -60,117 +51,165 @@ app.get("/classes", (req, res) => {
 });
 
 app.get("/characters/:id", (req, res) => {
-  const id = req.params.id;
+  res.set("content-type", "application/json");
+
+  const id = req.params.id; // Get the ID from the request URL
   const sql = `SELECT * FROM characters WHERE id = ?`;
 
-  DB.get(sql, [id], (err, row) => {
-    if (err) {
-      console.error(err.message);
-      return res
-        .status(500)
-        .json({ code: 500, status: "Internal Server Error" });
-    }
-    if (!row) {
-      return res.status(404).json({ code: 404, status: "Character not found" });
-    }
-    res.json({
-      id: row.id,
-      name: row.name,
-      initLvl: row.initLvl,
-      startClass: row.startClass,
-      vig: row.vig,
-      mind: row.mind,
-      end: row.end,
-      str: row.str,
-      dex: row.dex,
-      int: row.int,
-      faith: row.faith,
-      arc: row.arc,
+  let data;
+
+  try {
+    DB.get(sql, [id], (err, row) => {
+      if (err) {
+        throw err;
+      }
+      if (row) {
+        data = {
+          id: row.id,
+          name: row.name,
+          initLvl: row.initLvl,
+          startClass: row.startClass,
+          vig: row.vig,
+          mind: row.mind,
+          end: row.end,
+          str: row.str,
+          dex: row.dex,
+          int: row.int,
+          faith: row.faith,
+          arc: row.arc,
+        };
+      } else {
+        return res
+          .status(404)
+          .send({ code: 404, status: "Character not found" });
+      }
+      let content = JSON.stringify(data);
+      res.send(content);
     });
-  });
+  } catch (err) {
+    console.log(err.message);
+    res.status(467).send({ code: 467, status: err.message });
+  }
 });
 
 app.get("/characters", (req, res) => {
+  res.set("content-type", "application/json");
+
   const sql = `SELECT * FROM characters`;
 
-  DB.all(sql, [], (err, rows) => {
-    if (err) {
-      console.error(err.message);
-      return res
-        .status(500)
-        .json({ code: 500, status: "Internal Server Error" });
-    }
-    const characters = rows.map(row => ({
-      id: row.id,
-      name: row.name,
-      initLvl: row.initLvl,
-      startClass: row.startClass,
-      vig: row.vig,
-      mind: row.mind,
-      end: row.end,
-      str: row.str,
-      dex: row.dex,
-      int: row.int,
-      faith: row.faith,
-      arc: row.arc,
-    }));
-    res.json({ characters });
-  });
+  let data = { characters: [] };
+
+  try {
+    DB.all(sql, [], (err, rows) => {
+      if (err) {
+        throw err;
+      }
+      rows.forEach(row => {
+        data.characters.push({
+          id: row.id,
+          name: row.name,
+          initLvl: row.initLvl,
+          startClass: row.startClass,
+          vig: row.vig,
+          mind: row.mind,
+          end: row.end,
+          str: row.str,
+          dex: row.dex,
+          int: row.int,
+          faith: row.faith,
+          arc: row.arc,
+        });
+      });
+      let content = JSON.stringify(data);
+      res.send(content);
+    });
+  } catch (err) {
+    console.log(err.message);
+    res.status(467);
+    res.send(`{"code": 467, "status" : "${err.message}"}`);
+  }
 });
 
 app.post("/characters", (req, res) => {
-  const sql = `INSERT INTO characters(name, initLvl, startClass, vig, mind, end, str, dex, int, faith, arc) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-  const values = [
-    req.body.name,
-    req.body.initLvl,
-    req.body.startClass,
-    req.body.vig,
-    req.body.mind,
-    req.body.end,
-    req.body.str,
-    req.body.dex,
-    req.body.int,
-    req.body.faith,
-    req.body.arc,
-  ];
+  res.set("content-type", "application/json");
 
-  DB.run(sql, values, function (err) {
-    if (err) {
-      console.error(err.message);
-      return res
-        .status(500)
-        .json({ code: 500, status: "Internal Server Error" });
-    }
-    res
-      .status(201)
-      .json({ status: 201, message: `Character ${this.lastID} saved` });
-  });
+  const sql = `INSERT INTO characters(name, initLvl, startClass, vig, mind, end, str, dex, int, faith, arc) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+  const values = {
+    name: req.body.name,
+    initLvl: req.body.initLvl,
+    startClass: req.body.startClass,
+    vig: req.body.vig,
+    mind: req.body.mind,
+    end: req.body.end,
+    str: req.body.str,
+    dex: req.body.dex,
+    int: req.body.int,
+    faith: req.body.faith,
+    arc: req.body.arc,
+  };
+
+  try {
+    DB.run(sql, Object.values(values), function (err) {
+      if (err) {
+        res.status(468);
+        res.json({ code: 468, status: err.message });
+        return;
+      }
+      const newId = this.lastID; // Provides the auto-increment integer id
+      res.status(201);
+      res.json({ status: 201, message: `Character ${newId} saved` });
+    });
+  } catch (err) {
+    console.log(err.message);
+    res.status(500);
+    res.json({ code: 500, status: err.message });
+  }
 });
 
 app.delete("/characters/:id", (req, res) => {
-  const charId = req.params.id;
+  res.set("content-type", "application/json");
+
+  const charId = req.params.id; // Get the ID from the request parameters
   const sql = `DELETE FROM characters WHERE id = ?`;
 
-  DB.run(sql, [charId], function (err) {
-    if (err) {
-      console.error(err.message);
-      return res
-        .status(500)
-        .json({ code: 500, status: "Error deleting character" });
-    }
-    if (this.changes === 0) {
-      return res.status(404).json({ code: 404, status: "Character not found" });
-    }
-    res.json({ code: 200, status: "Character deleted successfully" });
-  });
+  try {
+    DB.run(sql, [charId], function (err) {
+      // Use DB.run for delete operations
+      if (err) {
+        console.log(err.message);
+        return res.status(500).send({
+          code: 500,
+          status: "Error deleting character: " + err.message,
+        });
+      }
+      // Check if a row was affected (deleted)
+      if (this.changes === 0) {
+        return res.status(404).send({
+          code: 404,
+          status: "Character not found",
+        });
+      }
+      res.send({
+        code: 200,
+        status: "Character deleted successfully",
+      });
+    });
+  } catch (err) {
+    console.log(err.message);
+    res.status(467).send({
+      code: 467,
+      status: err.message,
+    });
+  }
 });
 
-app.listen(PORT, err => {
+app.listen(8000, err => {
   if (err) {
     console.log("ERROR", err.message);
     return;
   }
-  console.log(`Server running on port: ${PORT}`);
+  console.log("Server running on port: 8000");
 });
 
 export default app;
