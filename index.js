@@ -7,7 +7,10 @@ import cors from "cors";
 const app = express();
 
 // CORS configuration
-const allowedOrigins = ["https://er-character-planner-teal.vercel.app"];
+const allowedOrigins = [
+  "https://er-character-planner-teal.vercel.app",
+  "http://localhost:3000",
+];
 app.use(
   cors({
     origin: function (origin, callback) {
