@@ -154,30 +154,54 @@ app.get("/characters", (req, res) => {
 app.post("/characters", (req, res) => {
   res.set("content-type", "application/json");
 
-  const sql = `INSERT INTO characters(name, initLvl, startClass, vig, mind, end, str, dex, int, faith, arc) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  const requiredFields = [
+    "name",
+    "initLvl",
+    "startClass",
+    "vig",
+    "mind",
+    "end",
+    "str",
+    "dex",
+    "int",
+    "faith",
+    "arc",
+  ];
 
-  const values = {
-    name: req.body.name,
-    initLvl: req.body.initLvl,
-    startClass: req.body.startClass,
-    vig: req.body.vig,
-    mind: req.body.mind,
-    end: req.body.end,
-    str: req.body.str,
-    dex: req.body.dex,
-    int: req.body.int,
-    faith: req.body.faith,
-    arc: req.body.arc,
-  };
+  const missingFields = requiredFields.filter(field => !req.body[field]);
+
+  if (missingFields.length > 0) {
+    return res.status(400).json({
+      status: 400,
+      message: `Missing required fields: ${missingFields.join(", ")}`,
+    });
+  }
+
+  const sql = `INSERT INTO characters(name, initLvl, startClass, vig, mind, end, str, dex, int, faith, arc) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+  const values = [
+    req.body.name,
+    req.body.initLvl,
+    req.body.startClass,
+    req.body.vig,
+    req.body.mind,
+    req.body.end,
+    req.body.str,
+    req.body.dex,
+    req.body.int,
+    req.body.faith,
+    req.body.arc,
+  ];
 
   try {
-    DB.run(sql, Object.values(values), function (err) {
+    DB.run(sql, values, function (err) {
       if (err) {
         res.status(468);
         res.json({ code: 468, status: err.message });
         return;
       }
-      const newId = this.lastID; // Provides the auto-increment integer id
+      const newId = this.lastID;
       res.status(201);
       res.json({ status: 201, message: `Character ${newId} saved` });
     });
