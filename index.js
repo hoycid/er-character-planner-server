@@ -249,6 +249,117 @@ app.delete("/characters/:id", (req, res) => {
   }
 });
 
+// Helper function to map row to desired data format
+const mapArmorData = row => ({
+  id: row.id,
+  name: row.name,
+  description: row.description,
+  type: row.type,
+  negation: row.negation,
+  resistance: row.resistance,
+  weight: row.weight,
+  effect: row.effect,
+  acquisition: row.acquisition,
+  ingame: row.ingame,
+  dlc: row.dlc,
+});
+
+// Helper function to handle errors and send responses
+const handleError = (err, res) => {
+  console.log(err.message);
+  res.status(467).send({
+    code: 467,
+    status: err.message,
+  });
+};
+
+// Get all talismans
+app.get("/talismans/", (req, res) => {
+  const sql = `SELECT * FROM talismans`;
+
+  let data = [];
+
+  DB.all(sql, [], (err, rows) => {
+    if (err) {
+      throw err;
+    }
+    rows.forEach(row => {
+      data.push({
+        id: row.id,
+        name: row.name,
+        effect: row.effect,
+        value: row.value,
+        description: row.description,
+        dlc: row.dlc,
+        image: row.image,
+      });
+    });
+    let content = JSON.stringify(data);
+    res.send(content);
+  });
+});
+
+// Get all armors
+app.get("/armors/", (req, res) => {
+  const sql = `SELECT * FROM armors`;
+
+  DB.all(sql, [], (err, rows) => {
+    if (err) return handleError(err, res);
+
+    const data = rows.map(mapArmorData);
+    res.json(data);
+  });
+});
+
+// Get specific armor by type and id
+app.get("/armors/:type/:id", (req, res) => {
+  const { type, id } = req.params;
+
+  if (!type || !id) {
+    return res.status(400).send({
+      code: 400,
+      status: "Type and ID are required.",
+    });
+  }
+
+  const sql = `SELECT * FROM armors WHERE type = ? AND id = ?`;
+
+  DB.get(sql, [type, id], (err, row) => {
+    if (err) return handleError(err, res);
+
+    if (row) {
+      const data = mapArmorData(row);
+      res.json(data);
+    } else {
+      res.status(404).send({
+        code: 404,
+        status: "Armor not found.",
+      });
+    }
+  });
+});
+
+// Get armors by type
+app.get("/armors/:type", (req, res) => {
+  const { type } = req.params;
+
+  const sql = `SELECT * FROM armors WHERE type = ?`;
+
+  DB.all(sql, [type], (err, rows) => {
+    if (err) return handleError(err, res);
+
+    if (rows.length) {
+      const data = rows.map(mapArmorData);
+      res.json(data);
+    } else {
+      res.status(404).send({
+        code: 404,
+        status: "No armors found for this type.",
+      });
+    }
+  });
+});
+
 app.listen(8000, err => {
   if (err) {
     console.log("ERROR", err.message);
