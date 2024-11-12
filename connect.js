@@ -9,7 +9,7 @@ const connected = err => {
   }
 };
 
-let sql = `CREATE TABLE IF NOT EXISTS characters(
+let createCharactersTable = `CREATE TABLE IF NOT EXISTS characters(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   initLvl INTEGER NOT NULL,
@@ -24,13 +24,60 @@ let sql = `CREATE TABLE IF NOT EXISTS characters(
   arc INTEGER NOT NULL
 )`;
 
-const DB = new sqlite3.Database("./mydata.db", sqlite3.OPEN_READWRITE, connected);
+let createArmorsTable = `CREATE TABLE IF NOT EXISTS armors(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  image TEXT NOT NULL,
+  description TEXT NOT NULL,
+  type TEXT NOT NULL,
+  negation TEXT NOT NULL,
+  resistance TEXT NOT NULL,
+  weight FLOAT NOT NULL,
+  effect TEXT NOT NULL,
+  acquisition TEXT NOT NULL,
+  ingame INTEGER NOT NULL,
+  dlc TEXT NOT NULL
+)`;
 
-DB.run(sql, [], err => {
-  if (err) {
-    console.log("Error creating characters table");
-    return;
-  }
-});
+let createTalismansTable = `CREATE TABLE IF NOT EXISTS talismans(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  image TEXT NOT NULL,
+  effect TEXT NOT NULL,
+  weight FLOAT NOT NULL,
+  value INTEGER NOT NULL,
+  description TEXT NOT NULL,
+  dlc TEXT NOT NULL,
+  image TEXT NOT NULL
+)`;
+
+const DB = new sqlite3.Database(
+  "./mydata.db",
+  sqlite3.OPEN_READWRITE,
+  connected
+);
+
+const createTables = () => {
+  DB.run(createCharactersTable, [], err => {
+    if (err) {
+      console.log("Error creating characters table");
+      return;
+    }
+  });
+
+  DB.run(createArmorsTable, [], err => {
+    if (err) {
+      console.log("Error creating armors table");
+      return;
+    }
+  });
+
+  DB.run(createTalismansTable, [], err => {
+    if (err) {
+      console.log("Error creating talismans table");
+      return;
+    }
+  });
+};
 
 export { DB };
