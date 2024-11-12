@@ -118,7 +118,7 @@ app.get("/characters", (req, res) => {
 
   const sql = `SELECT * FROM characters`;
 
-  let data = { characters: [] };
+  let data = [];
 
   try {
     DB.all(sql, [], (err, rows) => {
@@ -126,7 +126,7 @@ app.get("/characters", (req, res) => {
         throw err;
       }
       rows.forEach(row => {
-        data.characters.push({
+        data.push({
           id: row.id,
           name: row.name,
           initLvl: row.initLvl,
