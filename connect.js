@@ -80,4 +80,6 @@ const createTables = () => {
   });
 };
 
+createTables();
+
 export { DB };
